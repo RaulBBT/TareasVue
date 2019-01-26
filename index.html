@@ -1,0 +1,118 @@
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js">
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
+</script>
+<script src="http://momentjs.com/downloads/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+<script src="lodash.js"></script>
+<link rel="stylesheet" type="text/css" href="css/estilo.css"/>
+</head>
+<body>
+<h1>Proyecto Vue.js - Ra&uacute;l Mu&ntilde;oz</h1>
+<div id="miapp">
+<input v-model="caja" v-on:keyup.enter="anadirtarea" placeholder="&#191;Qu&eacute; quieres recordar?"></input>
+<div id="hrs">
+<br>
+{{pendientes}} tareas pendientes de un total de {{notas.length}} | <a v-on:click="borrarTodo"><span id="orange"><strong>x</strong> Borrar tareas completadas</a></span>
+<br>&nbsp;<br>
+</div>
+<input v-model="query" placeholder="Busca una tarea">
+  <transition-group  name="list" tag="ul" id="tareas"><li v-for="dato in notasordenadas" :key="dato.pos"><table id="tabla"><tr><td><h1 id="titulo" v-if="dato.completada==false"><img src="circulo.png" style="width:30px; height:30px;" v-on:click="completar(dato.completada, dato.pos)">&nbsp;{{dato.tarea}}</h1>
+  <h1 id="titulo" v-if="dato.completada==true" style="color:#24EC1E;"><img src="true.png" style="width:30px; height:30px;" v-on:click="completar(dato.completada, dato.pos)">&nbsp;<span style="text-decoration:line-through;">{{dato.tarea}}</span></h1></td>
+  <td><img id="borrar" src="icono.png" v-on:click="borrar(dato.pos)"/></td></tr>
+  <tr><td>Prioridad: <button style="background-color:#3BB9E2; color:white; border: none; text-decoration: none;"v-if="dato.prioridad==0">Low</button><button style="background-color:#838383; color:white; border: none; text-decoration: none;" v-else v-on:click="cambiarPrioridad(0, dato.pos)">Low</button>
+  <button style="background-color:blue; color:white; border: none; text-decoration: none;" v-if="dato.prioridad==1">Normal</button><button style="background-color:#838383; color:white; border: none; text-decoration: none;" v-else v-on:click="cambiarPrioridad(1, dato.pos)">Normal</button>
+  <button style="background-color:red; color:white; border: none; text-decoration: none;" v-if="dato.prioridad==2">Hight</button><button style="background-color:#838383; color:white; border: none; text-decoration: none;" v-else v-on:click="cambiarPrioridad(2, dato.pos)">Hight</button>
+  &nbsp;&nbsp;&nbsp;&nbsp;A&ntilde;adido hace {{fechacomputada(dato)}}</td></tr></table>
+	<br>
+  </li></transition-group>
+  </ul>
+  
+  
+</div>
+</body>
+<script>
+var miapp = new Vue({
+  el: '#miapp',
+  data:{
+	query: '',
+	notas:[
+		{pos:0, tarea:'estudiar java', prioridad:2, fecha_creacion:moment(), completada:true},
+		{pos:1, tarea:'aprender PHP', prioridad:1, fecha_creacion:moment(), completada:false}
+	],
+	caja:'',
+	notasDef:[],
+  },
+  computed:{
+	pendientes: function(){
+		var contador=0;
+		for(var i=0; i<this.notas.length;i++){
+			if(this.notas[i].completada==false){
+				contador++;
+			}
+		}
+		return contador;
+	},
+	notasordenadas: function(){
+		/*return _.orderBy(this.notas,['prioridad'], ['desc']);
+		for(var x=0; x<this.notas.length;x++){
+			this.notas[x].pos=x;
+		}*/
+		var vm = this;
+		var ordenat=_.orderBy(this.notas,['prioridad'], ['desc']);
+      return ordenat.filter(function (nota) {
+        return nota.tarea.toLowerCase().indexOf(vm.query.toLowerCase()) !== -1
+      })
+    }
+  },
+  mounted() {
+	if(localStorage.notas){
+		this.notas = JSON.parse(localStorage.getItem("notas"));
+		
+	}
+  },
+  methods: {
+	anadirtarea: function () {
+		this.notas.push({pos: (this.notas.length), tarea: ''+this.caja , prioridad:1, fecha_creacion:moment(),completada:false})
+		localStorage.setItem("notas",JSON.stringify(this.notas));
+	},
+	borrar: function(posicion) {
+		this.notas.splice(posicion, 1);
+		for(var x=0; x<this.notas.length;x++){
+			this.notas[x].pos=x;
+		}
+		localStorage.setItem("notas",JSON.stringify(this.notas));
+	},
+	cambiarPrioridad: function(prio, pos) {
+		this.notas[pos].prioridad=prio;
+	},
+	borrarTodo: function(){
+		for(var f=0; f<this.notas.length;f++){
+		for(var x=0; x<this.notas.length;x++){
+			if (this.notas[x].completada){
+				this.notas.splice(x, 1);
+			}
+		}
+		for(var x=0; x<this.notas.length;x++){
+			this.notas[x].pos=x;
+		}
+		localStorage.setItem("notas",JSON.stringify(this.notas));
+		}
+	},
+	completar: function(completar, pos){
+		if(completar){
+			this.notas[pos].completada=false;
+			
+		}else{
+			this.notas[pos].completada=true;
+		}
+	},
+	fechacomputada: function(dato){
+		return moment(dato.fecha_creacion, "YYYYMMDD").fromNow();
+	}
+  }
+})
+</script>
+</html>
